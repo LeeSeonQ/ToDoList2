@@ -33,7 +33,7 @@ class ToDoListViewController: UIViewController {
                let headerLabel = UILabel(frame: headerView.bounds)
                headerLabel.textAlignment = .center
                headerLabel.textColor = UIColor.white
-               headerLabel.text = "전체 헤더"
+               headerLabel.text = "머리"
                headerView.addSubview(headerLabel)
                tableView.tableHeaderView = headerView
                
@@ -43,7 +43,7 @@ class ToDoListViewController: UIViewController {
                let footerLabel = UILabel(frame: footerView.bounds)
                footerLabel.textAlignment = .center
                footerLabel.textColor = UIColor.white
-               footerLabel.text = "전체 푸터"
+               footerLabel.text = "발"
                footerView.addSubview(footerLabel)
                tableView.tableFooterView = footerView
                
@@ -144,31 +144,51 @@ extension ToDoListViewController: UITableViewDelegate,UITableViewDataSource {
     
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let selectedCategory = Category.allCases[indexPath.section] // 선택된 섹션에 해당하는 카테고리
+        let selectedCategory = Category.allCases[indexPath.section]
         let todayDoItList = dataManager.getTodayDoItList(for: selectedCategory)
         let task = todayDoItList[indexPath.row]
         
         let alert = UIAlertController(title: "작업 선택", message: "원하는 동작을 선택하세요", preferredStyle: .actionSheet)
         
         let updateAction = UIAlertAction(title: "수정", style: .default) { _ in
-            print("수정")
-        }
-        
-        let deleteAction = UIAlertAction(title: "삭제", style: .destructive) { _ in
-            self.dataManager.deleteTask(task)
-            self.tableView.reloadData()
+            let alertController = UIAlertController(title: "할 일 수정", message: nil, preferredStyle: .alert)
+            alertController.addTextField { textField in
+                textField.placeholder = "새로운 내용"
+                textField.text = task.content // 기존 내용을 보여줌
+            }
+            
+            let saveAction = UIAlertAction(title: "저장", style: .default) { _ in
+                if let newContent = alertController.textFields?.last?.text {
+                    let currentDate = Date()
+                    
+                    self.dataManager.updateDoItList(task, title: task.title!, date: currentDate, content: newContent, isCompleted: task.iscompleted, category: task.category)
+                    self.tableView.reloadData()
+                }
+            }
+            
+            let deleteAction = UIAlertAction(title: "삭제", style: .destructive) { _ in
+                self.dataManager.deleteDoItList(task)
+                self.tableView.reloadData()
+            }
+            
+            let cancelAction = UIAlertAction(title: "취소", style: .cancel, handler: nil)
+            
+            alertController.addAction(saveAction)
+            alertController.addAction(deleteAction)
+            alertController.addAction(cancelAction)
+            
+            self.present(alertController, animated: true, completion: nil)
         }
         
         let cancelAction = UIAlertAction(title: "취소", style: .cancel, handler: nil)
         
         alert.addAction(updateAction)
-        alert.addAction(deleteAction)
         alert.addAction(cancelAction)
         
-        present(alert, animated: true, completion: nil)
-        
         tableView.deselectRow(at: indexPath, animated: true)
+        present(alert, animated: true, completion: nil)
     }
+    
     // 섹션의 헤더 뷰 반환
       func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
           let headerView = UIView()
@@ -210,3 +230,4 @@ extension ToDoListViewController: UITableViewDelegate,UITableViewDataSource {
       }
     
 }
+
